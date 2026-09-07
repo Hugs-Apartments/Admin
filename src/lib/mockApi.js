@@ -82,6 +82,19 @@ let admins = [
   { id: uid(), email: 'admin@hugsapartments.ng', name: 'Hugs Admin', role: 'superadmin', created_at: isoDaysAgo(60) },
 ]
 
+// Newsletter subscribers (mirrors the backend `subscribers` table).
+let subscribers = [
+  { id: uid(), email: 'adaeze.okafor@example.com', name: 'Adaeze Okafor', created_at: isoDaysAgo(42) },
+  { id: uid(), email: 'tunde.adeyemi@example.com', name: 'Tunde Adeyemi', created_at: isoDaysAgo(37) },
+  { id: uid(), email: 'chioma.nwosu@example.com', name: 'Chioma Nwosu', created_at: isoDaysAgo(31) },
+  { id: uid(), email: 'fatima.bello@example.com', name: '', created_at: isoDaysAgo(28) },
+  { id: uid(), email: 'emeka.obi@example.com', name: 'Emeka Obi', created_at: isoDaysAgo(21) },
+  { id: uid(), email: 'ngozi.eze@example.com', name: 'Ngozi Eze', created_at: isoDaysAgo(14) },
+  { id: uid(), email: 'bola.ahmed@example.com', name: '', created_at: isoDaysAgo(9) },
+  { id: uid(), email: 'ifeoma.uche@example.com', name: 'Ifeoma Uche', created_at: isoDaysAgo(4) },
+  { id: uid(), email: 'newsletter.fan@example.com', name: '', created_at: isoDaysAgo(1) },
+]
+
 // ---- Mock API surface -----------------------------------------------------
 export const mockApi = {
   async login(email, password) {
@@ -244,5 +257,10 @@ export const mockApi = {
     await delay()
     admins = admins.filter((a) => a.id !== id)
     return { ok: true }
+  },
+
+  async listSubscribers() {
+    await delay()
+    return { subscribers: [...subscribers].sort((a, b) => b.created_at.localeCompare(a.created_at)) }
   },
 }

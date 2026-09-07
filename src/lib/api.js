@@ -77,4 +77,7 @@ export const api = {
   listAdmins: () => (USING_MOCK ? mockApi.listAdmins() : request('/api/auth/admin')),
   createAdmin: (body) => (USING_MOCK ? mockApi.createAdmin(body) : request('/api/auth/admin', { method: 'POST', body })),
   deleteAdmin: (id) => (USING_MOCK ? mockApi.deleteAdmin(id) : request(`/api/auth/admin/${id}`, { method: 'DELETE' })),
+
+  // Subscribers (newsletter list)
+  listSubscribers: () => (USING_MOCK ? mockApi.listSubscribers() : request('/api/subscribe')),
 }

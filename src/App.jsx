@@ -8,6 +8,7 @@ import Listings from './pages/Listings.jsx'
 import Bookings from './pages/Bookings.jsx'
 import Availability from './pages/Availability.jsx'
 import Payments from './pages/Payments.jsx'
+import Subscribers from './pages/Subscribers.jsx'
 import Settings from './pages/Settings.jsx'
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="bookings" element={<Bookings />} />
             <Route path="availability" element={<Availability />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="subscribers" element={<Subscribers />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

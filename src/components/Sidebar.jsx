@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   CalendarRange,
   CreditCard,
+  Mail,
   Settings,
   X,
 } from 'lucide-react'
@@ -15,6 +16,7 @@ const NAV = [
   { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
   { to: '/availability', label: 'Availability', icon: CalendarRange },
   { to: '/payments', label: 'Payments', icon: CreditCard },
+  { to: '/subscribers', label: 'Subscribers', icon: Mail },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
