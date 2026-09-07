@@ -63,8 +63,21 @@ export const api = {
     return USING_MOCK ? mockApi.listBookings(params) : request(`/api/bookings${qs ? `?${qs}` : ''}`)
   },
   getBooking: (id) => (USING_MOCK ? mockApi.getBooking(id) : request(`/api/bookings/${id}`)),
+  getBookingByReference: (reference) =>
+    USING_MOCK
+      ? mockApi.getBookingByReference(reference)
+      : request(`/api/bookings/reference/${encodeURIComponent(reference)}`, { auth: false }),
   updateBookingStatus: (id, status) =>
     USING_MOCK ? mockApi.updateBookingStatus(id, status) : request(`/api/bookings/${id}/status`, { method: 'PATCH', body: { status } }),
+
+  // Discounts / promo codes
+  listDiscounts: () => (USING_MOCK ? mockApi.listDiscounts() : request('/api/discounts')),
+  createDiscount: (body) => (USING_MOCK ? mockApi.createDiscount(body) : request('/api/discounts', { method: 'POST', body })),
+  updateDiscount: (id, body) => (USING_MOCK ? mockApi.updateDiscount(id, body) : request(`/api/discounts/${id}`, { method: 'PATCH', body })),
+  deleteDiscount: (id) => (USING_MOCK ? mockApi.deleteDiscount(id) : request(`/api/discounts/${id}`, { method: 'DELETE' })),
+
+  // Feedback
+  listFeedback: () => (USING_MOCK ? mockApi.listFeedback() : request('/api/feedback')),
 
   // Payments
   listPayments: (params = {}) => {

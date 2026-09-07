@@ -7,6 +7,9 @@ import {
   CreditCard,
   Mail,
   Settings,
+  Ban,
+  Tag,
+  MessageSquare,
   X,
 } from 'lucide-react'
 
@@ -14,8 +17,11 @@ const NAV = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/listings', label: 'Listings', icon: BedDouble },
   { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
+  { to: '/cancel', label: 'Cancel booking', icon: Ban },
   { to: '/availability', label: 'Availability', icon: CalendarRange },
   { to: '/payments', label: 'Payments', icon: CreditCard },
+  { to: '/discounts', label: 'Discounts', icon: Tag },
+  { to: '/feedback', label: 'Feedback', icon: MessageSquare },
   { to: '/subscribers', label: 'Subscribers', icon: Mail },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
@@ -49,7 +55,7 @@ export default function Sidebar({ open, onClose }) {
           </button>
         </div>
 
-        <nav className="mt-4 flex-1 space-y-1 px-3">
+        <nav className="mt-4 flex-1 space-y-1 overflow-y-auto px-3">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}

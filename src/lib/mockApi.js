@@ -78,6 +78,20 @@ let payments = bookings
 
 let blocks = {} // propertyId -> [{id, start_date, end_date, reason}]
 
+// Promo / discount codes (mirrors the backend `promo_codes` table).
+let promoCodes = [
+  { id: uid(), code: 'WELCOME10', type: 'percent', value: 10, active: true, max_uses: null, used_count: 12, min_nights: 0, starts_on: null, expires_on: null, created_at: isoDaysAgo(50) },
+  { id: uid(), code: 'STAY3PLUS', type: 'percent', value: 15, active: true, max_uses: 100, used_count: 5, min_nights: 3, starts_on: null, expires_on: null, created_at: isoDaysAgo(20) },
+  { id: uid(), code: 'FESTIVE5000', type: 'fixed', value: 5000, active: false, max_uses: null, used_count: 3, min_nights: 0, starts_on: null, expires_on: daysFromNow(-2), created_at: isoDaysAgo(30) },
+]
+
+// Guest feedback (mirrors the backend `feedback` table).
+let feedback = [
+  { id: uid(), booking_id: null, property_id: properties[0].id, property: { name: properties[0].name, type: properties[0].type }, reference: bookings[1]?.reference || null, guest_name: 'Adaeze Okafor', guest_email: 'adaeze@example.com', rating: 5, comment: 'Spotless and beautifully styled. The plum-and-gold interiors are stunning — will definitely return!', created_at: isoDaysAgo(6) },
+  { id: uid(), booking_id: null, property_id: properties[1].id, property: { name: properties[1].name, type: properties[1].type }, reference: bookings[4]?.reference || null, guest_name: 'Tunde Adeyemi', guest_email: 'tunde@example.com', rating: 4, comment: 'Great location and very comfortable. WiFi could be a touch faster.', created_at: isoDaysAgo(11) },
+  { id: uid(), booking_id: null, property_id: properties[2].id, property: { name: properties[2].name, type: properties[2].type }, reference: bookings[7]?.reference || null, guest_name: 'Chioma Nwosu', guest_email: 'chioma@example.com', rating: 5, comment: 'Felt like home. The check-in was seamless and the space was immaculate.', created_at: isoDaysAgo(18) },
+]
+
 let admins = [
   { id: uid(), email: 'admin@hugsapartments.ng', name: 'Hugs Admin', role: 'superadmin', created_at: isoDaysAgo(60) },
 ]
@@ -211,10 +225,55 @@ export const mockApi = {
     const property = properties.find((p) => p.id === b.property_id)
     return { booking: { ...b, property, payments: payments.filter((p) => p.booking_id === id) } }
   },
+  async getBookingByReference(reference) {
+    await delay()
+    const ref = String(reference || '').trim().toLowerCase()
+    const b = bookings.find((x) => x.reference?.toLowerCase() === ref)
+    if (!b) throw new Error('No booking found with that reference. Check the ID and try again.')
+    const property = properties.find((p) => p.id === b.property_id)
+    return { booking: { ...b, property } }
+  },
   async updateBookingStatus(id, status) {
     await delay()
     bookings = bookings.map((b) => (b.id === id ? { ...b, status } : b))
     return { booking: bookings.find((b) => b.id === id) }
+  },
+
+  // ---- Discounts / promo codes -------------------------------------------
+  async listDiscounts() {
+    await delay()
+    return { codes: [...promoCodes].sort((a, b) => b.created_at.localeCompare(a.created_at)) }
+  },
+  async createDiscount(body) {
+    await delay()
+    const code = String(body.code || '').trim().toUpperCase()
+    if (!code) throw new Error('Enter a code.')
+    if (promoCodes.some((c) => c.code === code)) throw new Error('A code with that name already exists.')
+    const row = {
+      id: uid(), used_count: 0, active: true, max_uses: null, min_nights: 0,
+      starts_on: null, expires_on: null, created_at: new Date().toISOString(),
+      ...body, code,
+    }
+    promoCodes.unshift(row)
+    return { code: row }
+  },
+  async updateDiscount(id, body) {
+    await delay()
+    promoCodes = promoCodes.map((c) =>
+      c.id === id ? { ...c, ...body, code: body.code ? String(body.code).trim().toUpperCase() : c.code } : c,
+    )
+    return { code: promoCodes.find((c) => c.id === id) }
+  },
+  async deleteDiscount(id) {
+    await delay()
+    promoCodes = promoCodes.filter((c) => c.id !== id)
+    return { ok: true }
+  },
+
+  // ---- Feedback ----------------------------------------------------------
+  async listFeedback() {
+    await delay()
+    return { feedback: [...feedback].sort((a, b) => b.created_at.localeCompare(a.created_at)) }
   },
 
   async listPayments(params = {}) {
