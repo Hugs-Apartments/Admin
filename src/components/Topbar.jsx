@@ -1,6 +1,5 @@
-import { Menu, LogOut, AlertTriangle } from 'lucide-react'
+import { Menu, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { USING_MOCK } from '../lib/api.js'
 
 export default function Topbar({ onMenu }) {
   const { admin, logout } = useAuth()
@@ -10,12 +9,6 @@ export default function Topbar({ onMenu }) {
       <button className="text-ink/70 lg:hidden" onClick={onMenu} aria-label="Open menu">
         <Menu className="h-6 w-6" />
       </button>
-
-      {USING_MOCK && (
-        <span className="hidden items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 sm:inline-flex">
-          <AlertTriangle className="h-3.5 w-3.5" /> Demo mode — mock data (set VITE_API_URL to connect backend)
-        </span>
-      )}
 
       <div className="ml-auto flex items-center gap-4">
         <div className="text-right">

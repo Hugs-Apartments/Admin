@@ -1,13 +1,13 @@
 // API client for the Hugs backend.
 //
-// If VITE_API_URL is set, it talks to the real backend. Otherwise it falls
-// back to an in-memory MOCK so the dashboard is fully clickable standalone
-// (the backend build lives in ../Backend). Swap by setting VITE_API_URL.
-
-import { mockApi } from './mockApi.js'
+// The admin dashboard is 100% backend-driven — every screen reads and writes
+// through the real API at VITE_API_URL. There is no mock/offline fallback:
+// without VITE_API_URL the client throws a clear error so the UI shows a proper
+// state instead of silently faking data. No Supabase keys or Paystack secrets
+// ever live in the admin; it holds only a short-lived admin JWT that the backend
+// issues on login.
 
 const API_URL = import.meta.env.VITE_API_URL || ''
-export const USING_MOCK = !API_URL
 
 const TOKEN_KEY = 'hugs_admin_token'
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
@@ -15,6 +15,9 @@ export const setToken = (t) => localStorage.setItem(TOKEN_KEY, t)
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
+  if (!API_URL) {
+    throw new Error('The dashboard is not configured (missing VITE_API_URL).')
+  }
   const headers = { 'Content-Type': 'application/json' }
   if (auth && getToken()) headers.Authorization = `Bearer ${getToken()}`
 
@@ -33,64 +36,61 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   return data
 }
 
-// Each method delegates to the mock when no API_URL is configured.
 export const api = {
   // Auth
   login: (email, password) =>
-    USING_MOCK ? mockApi.login(email, password) : request('/api/auth/admin/login', { method: 'POST', body: { email, password }, auth: false }),
-  me: () => (USING_MOCK ? mockApi.me() : request('/api/auth/admin/me')),
+    request('/api/auth/admin/login', { method: 'POST', body: { email, password }, auth: false }),
+  me: () => request('/api/auth/admin/me'),
 
   // Stats
-  overview: () => (USING_MOCK ? mockApi.overview() : request('/api/stats/overview')),
-  revenue: (days = 30) => (USING_MOCK ? mockApi.revenue(days) : request(`/api/stats/revenue?days=${days}`)),
+  overview: () => request('/api/stats/overview'),
+  revenue: (days = 30) => request(`/api/stats/revenue?days=${days}`),
 
-  // Properties
-  listProperties: () => (USING_MOCK ? mockApi.listProperties() : request('/api/properties?all=true')),
-  getProperty: (id) => (USING_MOCK ? mockApi.getProperty(id) : request(`/api/properties/${id}`)),
-  createProperty: (body) => (USING_MOCK ? mockApi.createProperty(body) : request('/api/properties', { method: 'POST', body })),
-  updateProperty: (id, body) => (USING_MOCK ? mockApi.updateProperty(id, body) : request(`/api/properties/${id}`, { method: 'PUT', body })),
-  deleteProperty: (id) => (USING_MOCK ? mockApi.deleteProperty(id) : request(`/api/properties/${id}`, { method: 'DELETE' })),
+  // Properties — ?all=true returns inactive listings too (admin only).
+  listProperties: () => request('/api/properties?all=true'),
+  getProperty: (id) => request(`/api/properties/${id}`),
+  createProperty: (body) => request('/api/properties', { method: 'POST', body }),
+  updateProperty: (id, body) => request(`/api/properties/${id}`, { method: 'PUT', body }),
+  deleteProperty: (id) => request(`/api/properties/${id}`, { method: 'DELETE' }),
 
   // Availability / blocks
-  getAvailability: (id) => (USING_MOCK ? mockApi.getAvailability(id) : request(`/api/properties/${id}/availability`, { auth: false })),
-  listBlocks: (id) => (USING_MOCK ? mockApi.listBlocks(id) : request(`/api/properties/${id}/blocks`)),
-  createBlock: (id, body) => (USING_MOCK ? mockApi.createBlock(id, body) : request(`/api/properties/${id}/blocks`, { method: 'POST', body })),
-  deleteBlock: (id, blockId) => (USING_MOCK ? mockApi.deleteBlock(id, blockId) : request(`/api/properties/${id}/blocks/${blockId}`, { method: 'DELETE' })),
+  getAvailability: (id) => request(`/api/properties/${id}/availability`, { auth: false }),
+  listBlocks: (id) => request(`/api/properties/${id}/blocks`),
+  createBlock: (id, body) => request(`/api/properties/${id}/blocks`, { method: 'POST', body }),
+  deleteBlock: (id, blockId) => request(`/api/properties/${id}/blocks/${blockId}`, { method: 'DELETE' }),
 
-  // Bookings
+  // Bookings — admin sees all; the only status change is cancellation.
   listBookings: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
-    return USING_MOCK ? mockApi.listBookings(params) : request(`/api/bookings${qs ? `?${qs}` : ''}`)
+    return request(`/api/bookings${qs ? `?${qs}` : ''}`)
   },
-  getBooking: (id) => (USING_MOCK ? mockApi.getBooking(id) : request(`/api/bookings/${id}`)),
+  getBooking: (id) => request(`/api/bookings/${id}`),
   getBookingByReference: (reference) =>
-    USING_MOCK
-      ? mockApi.getBookingByReference(reference)
-      : request(`/api/bookings/reference/${encodeURIComponent(reference)}`, { auth: false }),
+    request(`/api/bookings/reference/${encodeURIComponent(reference)}`, { auth: false }),
   updateBookingStatus: (id, status) =>
-    USING_MOCK ? mockApi.updateBookingStatus(id, status) : request(`/api/bookings/${id}/status`, { method: 'PATCH', body: { status } }),
+    request(`/api/bookings/${id}/status`, { method: 'PATCH', body: { status } }),
 
   // Discounts / promo codes
-  listDiscounts: () => (USING_MOCK ? mockApi.listDiscounts() : request('/api/discounts')),
-  createDiscount: (body) => (USING_MOCK ? mockApi.createDiscount(body) : request('/api/discounts', { method: 'POST', body })),
-  updateDiscount: (id, body) => (USING_MOCK ? mockApi.updateDiscount(id, body) : request(`/api/discounts/${id}`, { method: 'PATCH', body })),
-  deleteDiscount: (id) => (USING_MOCK ? mockApi.deleteDiscount(id) : request(`/api/discounts/${id}`, { method: 'DELETE' })),
+  listDiscounts: () => request('/api/discounts'),
+  createDiscount: (body) => request('/api/discounts', { method: 'POST', body }),
+  updateDiscount: (id, body) => request(`/api/discounts/${id}`, { method: 'PATCH', body }),
+  deleteDiscount: (id) => request(`/api/discounts/${id}`, { method: 'DELETE' }),
 
-  // Feedback
-  listFeedback: () => (USING_MOCK ? mockApi.listFeedback() : request('/api/feedback')),
+  // Feedback (read-only for admins)
+  listFeedback: () => request('/api/feedback'),
 
   // Payments
   listPayments: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
-    return USING_MOCK ? mockApi.listPayments(params) : request(`/api/payments${qs ? `?${qs}` : ''}`)
+    return request(`/api/payments${qs ? `?${qs}` : ''}`)
   },
-  getReceipt: (bookingId) => (USING_MOCK ? mockApi.getReceipt(bookingId) : request(`/api/payments/receipt/${bookingId}`)),
+  getReceipt: (bookingId) => request(`/api/payments/receipt/${bookingId}`),
 
-  // Admins
-  listAdmins: () => (USING_MOCK ? mockApi.listAdmins() : request('/api/auth/admin')),
-  createAdmin: (body) => (USING_MOCK ? mockApi.createAdmin(body) : request('/api/auth/admin', { method: 'POST', body })),
-  deleteAdmin: (id) => (USING_MOCK ? mockApi.deleteAdmin(id) : request(`/api/auth/admin/${id}`, { method: 'DELETE' })),
+  // Admin accounts (superadmin only)
+  listAdmins: () => request('/api/auth/admin'),
+  createAdmin: (body) => request('/api/auth/admin', { method: 'POST', body }),
+  deleteAdmin: (id) => request(`/api/auth/admin/${id}`, { method: 'DELETE' }),
 
   // Subscribers (newsletter list)
-  listSubscribers: () => (USING_MOCK ? mockApi.listSubscribers() : request('/api/subscribe')),
+  listSubscribers: () => request('/api/subscribe'),
 }

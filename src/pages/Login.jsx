@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Button, Field, inputCls } from '../components/ui.jsx'
-import { USING_MOCK } from '../lib/api.js'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState(USING_MOCK ? 'admin@hugsapartments.ng' : '')
-  const [password, setPassword] = useState(USING_MOCK ? 'demo' : '')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -59,12 +58,6 @@ export default function Login() {
           <Button type="submit" size="lg" loading={loading} className="mt-6 w-full">
             Sign in
           </Button>
-
-          {USING_MOCK && (
-            <p className="mt-4 text-center text-xs text-ink/40">
-              Demo mode — any email/password works.
-            </p>
-          )}
         </form>
       </div>
     </div>

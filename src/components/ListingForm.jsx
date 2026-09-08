@@ -30,9 +30,10 @@ export default function ListingForm({ property, onClose, onSaved }) {
   const toggleAmenity = (a) =>
     set('amenities', form.amenities.includes(a) ? form.amenities.filter((x) => x !== a) : [...form.amenities, a])
 
-  // Read chosen image files as data URLs and append them to the gallery. In
-  // mock mode these live in memory; the real backend would upload them and
-  // store the returned URLs instead.
+  // Read chosen image files as data URLs and store them inline on the listing.
+  // There is no separate upload service yet, so the gallery is saved as data
+  // URLs in the property's `images[]`. (A future step would upload the files to
+  // storage and keep only the returned URLs.)
   const onFiles = (e) => {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
