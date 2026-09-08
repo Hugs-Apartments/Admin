@@ -28,10 +28,11 @@ let properties = [
 ]
 
 const GUESTS = ['Adaeze Okafor', 'Tunde Adeyemi', 'Chioma Nwosu', 'Fatima Bello', 'Emeka Obi', 'Ngozi Eze', 'Bola Ahmed', 'Ifeoma Uche']
-// A booking is `pending` until payment succeeds (then `completed`), or
-// `cancelled` at the customer's request. There is no manual "confirmed" step —
-// successful payment is what confirms a booking.
-const STATUSES = ['pending', 'completed', 'cancelled']
+// A date is only ever booked once payment succeeds (`completed`). The only
+// other state is `cancelled` — at the customer's request, which refunds and
+// releases the dates. There is no "pending" hold: unpaid attempts never occupy
+// a date, so they aren't shown here.
+const STATUSES = ['completed', 'completed', 'cancelled']
 
 let bookings = Array.from({ length: 24 }).map((_, i) => {
   const p = properties[i % properties.length]
@@ -57,7 +58,7 @@ let bookings = Array.from({ length: 24 }).map((_, i) => {
     service_fee,
     total_amount: subtotal + service_fee,
     status,
-    payment_status: paid ? 'success' : status === 'cancelled' ? 'refunded' : 'pending',
+    payment_status: paid ? 'success' : 'refunded',
     created_at: isoDaysAgo(20 - Math.floor(i / 2)),
     notes: i % 5 === 0 ? 'Early check-in requested.' : null,
   }
@@ -179,7 +180,7 @@ export const mockApi = {
   },
   async deleteProperty(id) {
     await delay()
-    const active = bookings.some((b) => b.property_id === id && ['pending', 'completed'].includes(b.status))
+    const active = bookings.some((b) => b.property_id === id && b.status === 'completed')
     if (active) throw new Error('Cannot delete: this property has active bookings. Deactivate it instead.')
     properties = properties.filter((p) => p.id !== id)
     return { ok: true }
@@ -188,7 +189,7 @@ export const mockApi = {
   async getAvailability(id) {
     await delay()
     const occupied = bookings
-      .filter((b) => b.property_id === id && ['pending', 'completed'].includes(b.status))
+      .filter((b) => b.property_id === id && b.status === 'completed')
       .map((b) => ({ start: b.check_in, end: b.check_out }))
     ;(blocks[id] || []).forEach((bl) => occupied.push({ start: bl.start_date, end: bl.end_date }))
     return { property_id: id, occupied }

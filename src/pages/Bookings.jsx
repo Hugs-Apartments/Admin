@@ -5,13 +5,12 @@ import { Card, PageHeader, Spinner, StatusBadge, EmptyState } from '../component
 import { formatNaira, formatDate } from '../lib/format.js'
 import BookingDetail from '../components/BookingDetail.jsx'
 
-const STATUS_OPTIONS = ['', 'pending', 'completed', 'cancelled']
-const PAY_OPTIONS = ['', 'pending', 'success', 'failed', 'refunded']
+const STATUS_OPTIONS = ['', 'completed', 'cancelled']
+const PAY_OPTIONS = ['', 'success', 'refunded']
 
 const STATUS_LEGEND = [
-  { status: 'pending', text: 'Payment started but not completed. Dates are NOT held — they stay open until payment succeeds.' },
   { status: 'completed', text: 'Payment received via Paystack — this is what confirms a booking and holds the dates. The guest is emailed a PDF receipt automatically.' },
-  { status: 'cancelled', text: 'Cancelled at the guest’s request. The dates are released back to availability.' },
+  { status: 'cancelled', text: 'Cancelled at the guest’s request. The dates are released back to availability, and the payment is refunded.' },
 ]
 
 export default function Bookings() {
@@ -59,7 +58,7 @@ export default function Bookings() {
       {/* Legend — what each booking status means */}
       <Card className="mb-5 p-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-ink/50">What the statuses mean</p>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           {STATUS_LEGEND.map((l) => (
             <li key={l.status} className="flex items-start gap-2.5">
               <span className="shrink-0"><StatusBadge status={l.status} /></span>
