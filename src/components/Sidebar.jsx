@@ -57,6 +57,7 @@ export default function Sidebar({ open, onClose }) {
               key={to}
               to={to}
               end={end}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive ? 'bg-gold text-plum' : 'text-white/75 hover:bg-white/10 hover:text-white'
