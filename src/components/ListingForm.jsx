@@ -17,6 +17,8 @@ export default function ListingForm({ property, onClose, onSaved }) {
     max_guests: property?.max_guests || 1,
     area: property?.area || '',
     location: property?.location || 'Maryland, Lagos',
+    rating: property?.rating ?? 5,
+    review_count: property?.review_count ?? 0,
     amenities: property?.amenities || [...CORE_AMENITIES],
     images: property?.images || [],
     is_active: property?.is_active ?? true,
@@ -57,6 +59,8 @@ export default function ListingForm({ property, onClose, onSaved }) {
       ...form,
       price_per_night: Number(form.price_per_night),
       max_guests: Number(form.max_guests),
+      rating: Number(form.rating),
+      review_count: Number(form.review_count),
       images: form.images,
     }
     try {
@@ -94,6 +98,8 @@ export default function ListingForm({ property, onClose, onSaved }) {
             <Field label="Area"><input className={inputCls} value={form.area} onChange={(e) => set('area', e.target.value)} placeholder="e.g. Mende" /></Field>
             <Field label="Price per night (₦)"><input type="number" min="0" className={inputCls} value={form.price_per_night} onChange={(e) => set('price_per_night', e.target.value)} required /></Field>
             <Field label="Max guests"><input type="number" min="1" className={inputCls} value={form.max_guests} onChange={(e) => set('max_guests', e.target.value)} required /></Field>
+            <Field label="Rating (0–5, admin-set)"><input type="number" min="0" max="5" step="0.1" className={inputCls} value={form.rating} onChange={(e) => set('rating', e.target.value)} /></Field>
+            <Field label="Review count (shown on site)"><input type="number" min="0" className={inputCls} value={form.review_count} onChange={(e) => set('review_count', e.target.value)} /></Field>
             <div className="sm:col-span-2">
               <Field label="Description"><textarea rows={3} className={inputCls} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
             </div>

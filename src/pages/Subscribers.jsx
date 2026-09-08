@@ -93,7 +93,8 @@ export default function Subscribers() {
         />
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-ink/10 bg-offwhite text-xs uppercase tracking-wider text-ink/50">
                 <tr>
@@ -114,6 +115,19 @@ export default function Subscribers() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="divide-y divide-ink/5 md:hidden">
+            {filtered.map((s) => (
+              <div key={s.id || s.email} className="p-4">
+                <a href={`mailto:${s.email}`} className="block break-all font-medium text-ink hover:text-plum">{s.email}</a>
+                <div className="mt-1 flex items-center justify-between gap-3 text-xs text-ink/60">
+                  <span>{s.name || <span className="text-ink/30">—</span>}</span>
+                  <span className="shrink-0">{formatDate(s.created_at)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       )}

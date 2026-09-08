@@ -52,7 +52,8 @@ export default function Listings() {
         <EmptyState title="No listings yet" hint="Add your first apartment to get started." />
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-ink/10 bg-offwhite text-xs uppercase tracking-wider text-ink/50">
                 <tr>
@@ -96,6 +97,30 @@ export default function Listings() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="divide-y divide-ink/5 md:hidden">
+            {properties.map((p) => (
+              <div key={p.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <img src={p.images?.[0]} alt="" className="h-14 w-20 shrink-0 rounded object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate font-medium text-ink">{p.name}</p>
+                      <StatusBadge status={p.is_active ? 'active' : 'inactive'} />
+                    </div>
+                    <p className="mt-0.5 text-xs text-ink/60">{p.type} · up to {p.max_guests} guest(s)</p>
+                    <p className="mt-1 font-semibold text-plum">{formatNaira(p.price_per_night)}<span className="text-xs font-normal text-ink/50">/night</span></p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => toggleActive(p)}><Power className="h-4 w-4" /> {p.is_active ? 'Deactivate' : 'Activate'}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-4 w-4" /> Edit</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setError(''); setDeleting(p) }}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       )}

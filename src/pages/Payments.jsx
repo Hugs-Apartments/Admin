@@ -59,7 +59,8 @@ export default function Payments() {
         <EmptyState title="No payments found" />
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-ink/10 bg-offwhite text-xs uppercase tracking-wider text-ink/50">
                 <tr>
@@ -92,6 +93,31 @@ export default function Payments() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="divide-y divide-ink/5 md:hidden">
+            {payments.map((p) => (
+              <div key={p.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-ink">{p.reference}</p>
+                    <p className="text-xs text-ink/50">{p.booking?.guest_name || '—'}</p>
+                  </div>
+                  <p className="shrink-0 font-semibold text-plum">{formatNaira(p.amount)}</p>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <StatusBadge status={p.status} />
+                  <span className="text-xs capitalize text-ink/60">{p.provider}</span>
+                  <span className="text-xs text-ink/50">· {formatDateTime(p.created_at)}</span>
+                </div>
+                {p.status === 'success' && (
+                  <button onClick={() => downloadReceipt(p.booking_id)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-ink/15 px-2.5 py-1.5 text-xs font-semibold text-gold hover:bg-offwhite hover:text-plum">
+                    <Download className="h-4 w-4" /> Download receipt
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </Card>
       )}
