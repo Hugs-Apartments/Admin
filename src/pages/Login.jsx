@@ -31,13 +31,12 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="mb-8 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold/60">
-            <svg viewBox="0 0 32 32" className="h-7 w-7 text-gold" fill="none">
-              <path d="M4 28h24M7 28V13l5-4 5 4v15M20 28V16l4-3 4 3v12" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-            </svg>
-          </span>
-          <h1 className="mt-4 font-serif text-3xl font-bold text-white">HUGS</h1>
-          <p className="mt-1 text-xs font-medium uppercase tracking-[0.28em] text-gold">Admin Portal</p>
+          <img
+            src="/HUGS-LOGO-2.png"
+            alt="Hugs Luxury Apartments"
+            className="mx-auto h-28 w-28 rounded-2xl object-cover shadow-lg ring-1 ring-gold/30"
+          />
+          <p className="mt-4 text-xs font-medium uppercase tracking-[0.28em] text-gold">Admin Portal</p>
         </div>
 
         <form onSubmit={submit} className="rounded-2xl border-t-2 border-gold bg-white p-8 shadow-2xl">

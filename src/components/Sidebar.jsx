@@ -40,11 +40,7 @@ export default function Sidebar({ open, onClose }) {
         {/* Brand */}
         <div className="flex items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/60">
-              <svg viewBox="0 0 32 32" className="h-5 w-5 text-gold" fill="none">
-                <path d="M4 28h24M7 28V13l5-4 5 4v15M20 28V16l4-3 4 3v12" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-              </svg>
-            </span>
+            <img src="/HUGS-LOGO-2.png" alt="Hugs Luxury Apartments" className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/40" />
             <div className="leading-none">
               <p className="font-serif text-lg font-bold text-white">HUGS</p>
               <p className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.25em] text-gold">Admin</p>
