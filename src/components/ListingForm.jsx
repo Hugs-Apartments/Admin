@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, Upload, Trash2 } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { Button, Field, inputCls } from './ui.jsx'
@@ -9,7 +9,11 @@ const EXTRA_AMENITIES = ['Smart TV', 'Air Conditioning', 'Full Kitchen', 'Kitche
 
 export default function ListingForm({ property, onClose, onSaved }) {
   const isEdit = !!property
-  const [form, setForm] = useState({
+  // Per-listing draft key so an accidental refresh doesn't wipe half-entered
+  // work — a new listing and each edited listing keep separate drafts.
+  const draftKey = `hugs_listing_draft_${property?.id || 'new'}`
+
+  const defaults = {
     name: property?.name || '',
     type: property?.type || 'Studio',
     description: property?.description || '',
@@ -17,43 +21,73 @@ export default function ListingForm({ property, onClose, onSaved }) {
     max_guests: property?.max_guests || 1,
     area: property?.area || '',
     location: property?.location || 'Maryland, Lagos',
+    map_url: property?.map_url || '',
     rating: property?.rating ?? 5,
     review_count: property?.review_count ?? 0,
     amenities: property?.amenities || [...CORE_AMENITIES],
     images: property?.images || [],
     is_active: property?.is_active ?? true,
+  }
+
+  const [form, setForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem(draftKey)
+      if (saved) return { ...defaults, ...JSON.parse(saved) }
+    } catch {
+      /* corrupt/unavailable storage — fall back to defaults */
+    }
+    return defaults
   })
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+
+  // Persist the in-progress form on every change so a reload restores it.
+  // Images are now short Cloudinary URLs, so this stays well within quota.
+  useEffect(() => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(form))
+    } catch {
+      /* storage full/blocked — draft simply won't persist */
+    }
+  }, [draftKey, form])
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(draftKey)
+    } catch {
+      /* ignore */
+    }
+  }
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const toggleAmenity = (a) =>
     set('amenities', form.amenities.includes(a) ? form.amenities.filter((x) => x !== a) : [...form.amenities, a])
 
-  // Read chosen image files as data URLs and store them inline on the listing.
-  // There is no separate upload service yet, so the gallery is saved as data
-  // URLs in the property's `images[]`. (A future step would upload the files to
-  // storage and keep only the returned URLs.)
-  const onFiles = (e) => {
+  // Upload each chosen file through the backend to Cloudinary and store the
+  // returned HTTPS URLs on the listing. No base64 ever reaches the DB, so large
+  // photos work and rows stay small.
+  const onFiles = async (e) => {
     const files = Array.from(e.target.files || [])
-    if (!files.length) return
-    Promise.all(
-      files.map(
-        (file) =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(reader.result)
-            reader.onerror = reject
-            reader.readAsDataURL(file)
-          }),
-      ),
-    ).then((dataUrls) => set('images', [...form.images, ...dataUrls]))
     e.target.value = '' // let the same file be re-selected later
+    if (!files.length) return
+    setUploading(true)
+    setError('')
+    try {
+      const results = await Promise.all(files.map((file) => api.uploadImage(file)))
+      const urls = results.map((r) => r.url)
+      setForm((f) => ({ ...f, images: [...f.images, ...urls] }))
+    } catch (err) {
+      setError(err.message || 'Image upload failed.')
+    } finally {
+      setUploading(false)
+    }
   }
   const removeImage = (idx) => set('images', form.images.filter((_, i) => i !== idx))
 
   const submit = async (e) => {
     e.preventDefault()
+    if (uploading) return
     setSaving(true)
     setError('')
     const payload = {
@@ -62,11 +96,13 @@ export default function ListingForm({ property, onClose, onSaved }) {
       max_guests: Number(form.max_guests),
       rating: Number(form.rating),
       review_count: Number(form.review_count),
+      map_url: form.map_url?.trim() || null,
       images: form.images,
     }
     try {
       if (isEdit) await api.updateProperty(property.id, payload)
       else await api.createProperty(payload)
+      clearDraft()
       onSaved()
     } catch (err) {
       setError(err.message || 'Save failed.')
@@ -104,6 +140,19 @@ export default function ListingForm({ property, onClose, onSaved }) {
             <div className="sm:col-span-2">
               <Field label="Description"><textarea rows={3} className={inputCls} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
             </div>
+            <div className="sm:col-span-2">
+              <Field label="Map link (optional)">
+                <input
+                  className={inputCls}
+                  value={form.map_url}
+                  onChange={(e) => set('map_url', e.target.value)}
+                  placeholder="Google Maps link, address, or 6.5665, 3.3665"
+                />
+              </Field>
+              <p className="mt-1 text-xs text-ink/40">
+                Paste a Google Maps link (or an address / coordinates). Leave blank and no map shows on the listing.
+              </p>
+            </div>
           </div>
 
           <div className="mt-5">
@@ -126,11 +175,15 @@ export default function ListingForm({ property, onClose, onSaved }) {
 
           <div className="mt-5">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink/50">Photos</p>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/20 bg-offwhite px-4 py-6 text-center transition-colors hover:border-gold">
-              <Upload className="h-6 w-6 text-gold" />
-              <span className="text-sm font-medium text-ink/70">Click to select images</span>
-              <span className="text-xs text-ink/40">JPG or PNG — you can choose several at once</span>
-              <input type="file" accept="image/*" multiple onChange={onFiles} className="hidden" />
+            <label
+              className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/20 bg-offwhite px-4 py-6 text-center transition-colors hover:border-gold ${
+                uploading ? 'pointer-events-none opacity-60' : 'cursor-pointer'
+              }`}
+            >
+              <Upload className={`h-6 w-6 text-gold ${uploading ? 'animate-pulse' : ''}`} />
+              <span className="text-sm font-medium text-ink/70">{uploading ? 'Uploading…' : 'Click to select images'}</span>
+              <span className="text-xs text-ink/40">JPG or PNG — you can choose several at once (max 8MB each)</span>
+              <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
             </label>
 
             {form.images.length > 0 && (
@@ -159,7 +212,7 @@ export default function ListingForm({ property, onClose, onSaved }) {
 
           <div className="mt-6 flex justify-end gap-3 border-t border-ink/10 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="gold" loading={saving}>{isEdit ? 'Save changes' : 'Create listing'}</Button>
+            <Button type="submit" variant="gold" loading={saving} disabled={uploading}>{isEdit ? 'Save changes' : 'Create listing'}</Button>
           </div>
         </form>
       </div>

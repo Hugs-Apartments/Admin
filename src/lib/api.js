@@ -53,6 +53,27 @@ export const api = {
   updateProperty: (id, body) => request(`/api/properties/${id}`, { method: 'PUT', body }),
   deleteProperty: (id) => request(`/api/properties/${id}`, { method: 'DELETE' }),
 
+  // Image upload (multipart) — the backend proxies the file to Cloudinary and
+  // returns { url, publicId }. We must NOT set Content-Type: the browser adds
+  // the multipart boundary itself. Only the admin JWT goes along.
+  uploadImage: async (file) => {
+    if (!API_URL) {
+      throw new Error('The dashboard is not configured (missing VITE_API_URL).')
+    }
+    const fd = new FormData()
+    fd.append('image', file)
+    const headers = {}
+    if (getToken()) headers.Authorization = `Bearer ${getToken()}`
+    const res = await fetch(`${API_URL}/api/uploads/image`, { method: 'POST', headers, body: fd })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const err = new Error(data.error || `Upload failed (${res.status})`)
+      err.status = res.status
+      throw err
+    }
+    return data
+  },
+
   // Availability / blocks
   getAvailability: (id) => request(`/api/properties/${id}/availability`, { auth: false }),
   listBlocks: (id) => request(`/api/properties/${id}/blocks`),
