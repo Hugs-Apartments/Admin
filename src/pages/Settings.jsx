@@ -7,8 +7,8 @@ import { formatDate } from '../lib/format.js'
 
 const DEFAULT_BUSINESS = {
   name: 'Hugs Luxury Apartments',
-  whatsapp: '+234 800 000 0000',
-  email: 'stay@hugsapartments.ng',
+  whatsapp: '+234 909 215 7050',
+  email: 'info@hugsluxuryapartments.com',
   address: 'Maryland, Lagos, Nigeria',
 }
 
